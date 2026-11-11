@@ -9,3 +9,7 @@
   provider checks the model-specific combinations.
 - **Tests mock HTTP and check request metadata and the exact input bytes** for
   both providers. Offline fixtures clear both override variables.
+
+Credential-bearing Gemini and MiniMax API requests must disable automatic redirects
+and reject 3xx responses before parsing JSON or polling again. Cover submission,
+polling and file lookup with offline transport tests. Media downloads are separate.

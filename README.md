@@ -141,6 +141,9 @@ DeerFlow is model-agnostic — it works with any LLM that implements the OpenAI-
 
 DeerFlow can execute commands and read and write files. It is designed to run in a local trusted environment, and a Gateway admin account is equivalent to code execution on the host. Before you deploy it on a server or expose it to a network, read the full [Security Notice](docs/guide/security.md) and [SECURITY.md](SECURITY.md).
 
+Video-generation API requests (submission, polling and file lookup) reject redirects.
+Configure the final provider API endpoint; media-download behavior is unchanged.
+
 ## Contributing
 
 We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, workflow, and guidelines.

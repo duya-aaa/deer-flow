@@ -59,6 +59,14 @@ def _to_data_url(image_path: str) -> str:
     return f"data:{_guess_mime(image_path)};base64,{b64}"
 
 
+def _check_api_response(response: requests.Response) -> None:
+    """Reject API redirects before parsing a response or polling again."""
+    if 300 <= response.status_code < 400:
+        response.close()
+        raise requests.HTTPError("Video API redirect refused; configure the final API endpoint", response=response)
+    response.raise_for_status()
+
+
 def _poll_video_task(host: str, auth: str, task_id: str, max_attempts: int = 120, interval: int = 3) -> str:
     for _ in range(max_attempts):
         response = requests.get(
@@ -66,8 +74,9 @@ def _poll_video_task(host: str, auth: str, task_id: str, max_attempts: int = 120
             headers={"Authorization": auth},
             params={"task_id": task_id},
             timeout=30,
+            allow_redirects=False,
         )
-        response.raise_for_status()
+        _check_api_response(response)
         payload = response.json()
         status = payload.get("status")
         if status == "Success":
@@ -94,8 +103,9 @@ def _poll_gemini_operation(api_key: str, operation_name: str, max_attempts: int 
             f"https://generativelanguage.googleapis.com/v1beta/{operation_name}",
             headers={"x-goog-api-key": api_key},
             timeout=30,
+            allow_redirects=False,
         )
-        response.raise_for_status()
+        _check_api_response(response)
         payload = response.json()
         if not payload.get("done", False):
             time.sleep(interval)
@@ -123,8 +133,9 @@ def _retrieve_file_url(host: str, auth: str, file_id: str) -> str:
         headers={"Authorization": auth},
         params={"file_id": file_id},
         timeout=30,
+        allow_redirects=False,
     )
-    response.raise_for_status()
+    _check_api_response(response)
     payload = response.json()
     _check_base_resp(payload)
     return payload["file"]["download_url"]
@@ -168,8 +179,9 @@ def _generate_video_minimax(prompt: str, reference_images: list[str], output_fil
         headers={"Authorization": auth, "Content-Type": "application/json"},
         json=body,
         timeout=60,
+        allow_redirects=False,
     )
-    response.raise_for_status()
+    _check_api_response(response)
     payload = response.json()
     _check_base_resp(payload)
     task_id = payload["task_id"]
@@ -210,8 +222,9 @@ def _generate_video_gemini(prompt: str, reference_images: list[str], output_file
         headers={"x-goog-api-key": gemini_api_key, "Content-Type": "application/json"},
         json=request_json,
         timeout=60,
+        allow_redirects=False,
     )
-    response.raise_for_status()
+    _check_api_response(response)
     data = response.json()
     operation_name = data["name"]
     download_url = _poll_gemini_operation(gemini_api_key, operation_name)
